@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "appServicePlanSku": {
+        "value": {
+          "name": "F1",
+          "tier": "Free"
+        }
+      },
+      "sqlDatabaseSku": {
+        "value": {
+          "name": "Standard",
+          "tier": "Standard"
+        }
+      },
+      "sqlServerAdministratorLogin": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/1ca6bf90-05e5-401c-a602-4f23fb9fbda1/resourceGroups/learn-e6df4acc-2c1a-462c-a148-bfec882c6aea/providers/Microsoft.KeyVault/vaults/BD-TEST-KEY-VAULT"
+          },
+          "secretName": "sqlServerAdministratorLogin"
+        }
+      },
+      "sqlServerAdministratorPassword": {
+        "reference": {
+          "keyVault": {
+            "id": "/subscriptions/1ca6bf90-05e5-401c-a602-4f23fb9fbda1/resourceGroups/learn-e6df4acc-2c1a-462c-a148-bfec882c6aea/providers/Microsoft.KeyVault/vaults/BD-TEST-KEY-VAULT"
+          },
+          "secretName": "sqlServerAdministratorPassword"
+        }
+      }
+    }
+}
+
+  
