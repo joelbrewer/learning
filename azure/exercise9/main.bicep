@@ -1,68 +1,91 @@
-param networkSecurityGroups_ToyTruckServer_nsg_name string = 'ToyTruckServer-nsg'
-param virtualMachines_ToyTruckServer_name string = 'ToyTruckServer'
-param networkInterfaces_toytruckserver172_name string = 'toytruckserver172'
-param publicIPAddresses_ToyTruckServer_ip_name string = 'ToyTruckServer-ip'
-param virtualNetworks_ToyTruckServer_vnet_name string = 'ToyTruckServer-vnet'
+@description('The location where resources are deployed.')
+param location string = resourceGroup().location
 
-resource networkSecurityGroups_ToyTruckServer_nsg_name_resource 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
-  name: networkSecurityGroups_ToyTruckServer_nsg_name
-  location: 'westus3'
-  properties: {
-    securityRules: []
-  }
+@description('The name of the size of the virtual machine to deploy.')
+param virtualMachineSizeName string = 'Standard_B1s'
+
+@description('The name of the storage account SKU to use for the virtual machine\'s managed disk.')
+param virtualMachineManagedDiskStorageAccountType string = 'Premium_LRS'
+
+@description('The administrator username for the virtual machine.')
+param virtualMachineAdminUsername string = 'toytruckadmin'
+
+@description('The administrator password for the virtual machine.')
+@secure()
+param virtualMachineAdminPassword string
+
+@description('The name of the SKU of the public IP address to deploy.')
+param publicIPAddressSkuName string = 'Standard'
+
+@description('The virtual network address range.')
+param virtualNetworkAddressPrefix string
+
+@description('The default subnet address range within the virtual network')
+param virtualNetworkDefaultSubnetAddressPrefix string
+
+var virtualNetworkName = 'ToyTruckServer-vnet'
+var virtualMachineName = 'ToyTruckServer'
+var networkInterfaceName = 'toytruckserver172'
+var publicIPAddressName = 'ToyTruckServer-ip'
+var networkSecurityGroupName = 'ToyTruckServer-nsg'
+var virtualNetworkDefaultSubnetName = 'default'
+var virtualMachineImageReference = {
+  publisher: 'canonical'
+  offer: '0001-com-ubuntu-server-focal'
+  sku: '20_04-lts-gen2'
+  version: 'latest'
+}
+var virtualMachineOSDiskName = 'ToyTruckServer_OsDisk_1_ce8d88d6fec5420e8faa8851647a3522'
+
+
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
+  name: networkSecurityGroupName
+  location: location
 }
 
-resource publicIPAddresses_ToyTruckServer_ip_name_resource 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
-  name: publicIPAddresses_ToyTruckServer_ip_name
-  location: 'westus3'
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
+  name: publicIPAddressName
+  location: location
   sku: {
-    name: 'Standard'
+    name: publicIPAddressSkuName
     tier: 'Regional'
   }
   properties: {
-    ipAddress: '20.169.33.235'
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
     idleTimeoutInMinutes: 4
-    ipTags: []
   }
 }
 
-resource virtualMachines_ToyTruckServer_name_resource 'Microsoft.Compute/virtualMachines@2023-03-01' = {
-  name: virtualMachines_ToyTruckServer_name
-  location: 'westus3'
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
+  name: virtualMachineName
+  location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_B1s'
+      vmSize: virtualMachineSizeName
     }
     additionalCapabilities: {
       hibernationEnabled: false
     }
     storageProfile: {
-      imageReference: {
-        publisher: 'canonical'
-        offer: '0001-com-ubuntu-server-focal'
-        sku: '20_04-lts-gen2'
-        version: 'latest'
-      }
+      imageReference: virtualMachineImageReference
       osDisk: {
         osType: 'Linux'
-        name: '${virtualMachines_ToyTruckServer_name}_OsDisk_1_ce8d88d6fec5420e8faa8851647a3522'
+        name: virtualMachineOSDiskName
         createOption: 'FromImage'
         caching: 'ReadWrite'
         managedDisk: {
-          storageAccountType: 'Premium_LRS'
-          id: resourceId('Microsoft.Compute/disks', '${virtualMachines_ToyTruckServer_name}_OsDisk_1_ce8d88d6fec5420e8faa8851647a3522')
+          storageAccountType: virtualMachineManagedDiskStorageAccountType
         }
         deleteOption: 'Delete'
         diskSizeGB: 30
       }
-      dataDisks: []
       diskControllerType: 'SCSI'
     }
     osProfile: {
-      computerName: virtualMachines_ToyTruckServer_name
-      adminUsername: 'toytruckadmin'
+      computerName: virtualMachineName
+      adminUsername: virtualMachineAdminUsername
+      adminPassword: virtualMachineAdminPassword
       linuxConfiguration: {
         disablePasswordAuthentication: false
         provisionVMAgent: true
@@ -72,9 +95,7 @@ resource virtualMachines_ToyTruckServer_name_resource 'Microsoft.Compute/virtual
         }
         enableVMAgentPlatformUpdates: false
       }
-      secrets: []
       allowExtensionOperations: true
-      requireGuestProvisionSignal: true
     }
     securityProfile: {
       uefiSettings: {
@@ -86,7 +107,7 @@ resource virtualMachines_ToyTruckServer_name_resource 'Microsoft.Compute/virtual
     networkProfile: {
       networkInterfaces: [
         {
-          id: networkInterfaces_toytruckserver172_name_resource.id
+          id: networkInterface.id
           properties: {
             deleteOption: 'Detach'
           }
@@ -101,83 +122,58 @@ resource virtualMachines_ToyTruckServer_name_resource 'Microsoft.Compute/virtual
   }
 }
 
-resource virtualNetworks_ToyTruckServer_vnet_name_resource 'Microsoft.Network/virtualNetworks@2023-06-01' = {
-  name: virtualNetworks_ToyTruckServer_vnet_name
-  location: 'westus3'
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-06-01' = {
+  name: virtualNetworkName
+  location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.0.0.0/16'
+        virtualNetworkAddressPrefix
       ]
     }
     subnets: [
       {
-        name: 'default'
-        id: virtualNetworks_ToyTruckServer_vnet_name_default.id
+        name: virtualNetworkDefaultSubnetName
         properties: {
-          addressPrefix: '10.0.0.0/24'
-          delegations: []
+          addressPrefix: virtualNetworkDefaultSubnetAddressPrefix
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
         }
-        type: 'Microsoft.Network/virtualNetworks/subnets'
       }
     ]
-    virtualNetworkPeerings: []
     enableDdosProtection: false
   }
-}
 
-resource virtualNetworks_ToyTruckServer_vnet_name_default 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
-  name: '${virtualNetworks_ToyTruckServer_vnet_name}/default'
-  properties: {
-    addressPrefix: '10.0.0.0/24'
-    delegations: []
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Enabled'
+  resource defaultSubnet 'subnets' existing = {
+    name: virtualNetworkDefaultSubnetName
   }
-  dependsOn: [
-    virtualNetworks_ToyTruckServer_vnet_name_resource
-  ]
 }
 
-resource networkInterfaces_toytruckserver172_name_resource 'Microsoft.Network/networkInterfaces@2023-06-01' = {
-  name: networkInterfaces_toytruckserver172_name
-  location: 'westus3'
-  kind: 'Regular'
+resource networkInterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
+  name: networkInterfaceName
+  location: location
   properties: {
     ipConfigurations: [
       {
         name: 'ipconfig1'
-        id: '${networkInterfaces_toytruckserver172_name_resource.id}/ipConfigurations/ipconfig1'
-        etag: 'W/"3806eefc-a51e-47a1-8bfa-7f47d709dfb2"'
-        type: 'Microsoft.Network/networkInterfaces/ipConfigurations'
         properties: {
-          provisioningState: 'Succeeded'
-          privateIPAddress: '10.0.0.4'
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIPAddresses_ToyTruckServer_ip_name_resource.id
-            properties: {
-              deleteOption: 'Detach'
-            }
+            id: publicIPAddress.id
           }
           subnet: {
-            id: virtualNetworks_ToyTruckServer_vnet_name_default.id
+            id: virtualNetwork::defaultSubnet.id
           }
           primary: true
           privateIPAddressVersion: 'IPv4'
         }
       }
     ]
-    dnsSettings: {
-      dnsServers: []
-    }
     enableAcceleratedNetworking: false
     enableIPForwarding: false
     disableTcpStateTracking: false
     networkSecurityGroup: {
-      id: networkSecurityGroups_ToyTruckServer_nsg_name_resource.id
+      id: networkSecurityGroup.id
     }
     nicType: 'Standard'
     auxiliaryMode: 'None'
