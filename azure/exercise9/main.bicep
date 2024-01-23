@@ -2,13 +2,13 @@
 param location string = resourceGroup().location
 
 @description('The name of the size of the virtual machine to deploy.')
-param virtualMachineSizeName string = 'Standard_B1s'
+param virtualMachineSizeName string
 
 @description('The name of the storage account SKU to use for the virtual machine\'s managed disk.')
-param virtualMachineManagedDiskStorageAccountType string = 'Premium_LRS'
+param virtualMachineManagedDiskStorageAccountType string
 
 @description('The administrator username for the virtual machine.')
-param virtualMachineAdminUsername string = 'toytruckadmin'
+param virtualMachineAdminUsername string
 
 @description('The administrator password for the virtual machine.')
 @secure()
@@ -160,6 +160,13 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
             id: publicIPAddress.id
+            properties: {
+              deleteOption: 'Detach'
+            }
+            sku: {
+              name: 'Basic'
+              tier: 'Regional'
+            }
           }
           subnet: {
             id: virtualNetwork::defaultSubnet.id
