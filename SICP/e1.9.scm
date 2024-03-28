@@ -29,4 +29,4 @@
 ;; => (+ 0 9)
 ;; => 9
 
-;; This process is iteractive
+;; This process is iterative
