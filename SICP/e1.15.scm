@@ -9,4 +9,4 @@
 ;; a) Procedure p is applied five times when (sine 12.15) is evaluated - Missed by one because I logged the sine fxn
 ;; b) Order of growth:
 ;;    Time:  O(log n)
-;;    Space: O(log n) ?
+;;    Space: O(log n)
