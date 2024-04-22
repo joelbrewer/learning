@@ -1,8 +1,11 @@
-;; Still buggy; wip
-(define (fast-expt-iter b n a)
+(define (fast-expt-iter a b n)
   (cond ((= n 0) a)
-	((even? n) (fast-expt-iter b (/ n 2) (* a (square b))))
-	(else (fast-expt-iter b (- n 1) (* a b)))))
+	((even? n)
+	 (fast-expt-iter
+	  (* a (square b))
+	  (square b)
+	  (- (/ n 2) 1)))
+	(else (fast-expt-iter (* a b) b (- n 1)))))
 
 (define (square n)
   (* n n))
