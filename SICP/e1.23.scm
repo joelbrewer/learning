@@ -14,13 +14,20 @@
   (display elapsed-time)
   (newline))
 
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
 (define (smallest-divisor n)
   (find-divisor n 2))
 
 (define (find-divisor n test-divisor)
-  (cond ((> (square test-divisor) n) n)
-	 ((divides? test-divisor n) test-divisor)
-	 (else (find-divisor n (+ test-divisor 1)))))
+  (cond ((> (square test-divisor) n) n)               ;; If n isn't prime, it must have a divisor less <= sqrt(n)
+	((divides? test-divisor n) test-divisor)      ;; If the current test divides n, return it
+	(else (find-divisor n (next test-divisor)))))  ;; If the current test doesn't divide n, increment by one and test again
+
+(define (next n)
+  (cond ((= n 2) 3)
+	(else (+ n 2))))
 
 (define (divides? a b)
   (= (remainder b a ) 0))
@@ -28,19 +35,6 @@
 (define (square n)
   (* n n))
 
-(define (prime? n)
-  (= n (smallest-divisor n)))
-
-;; (define (search-for-primes s e max-primes)
-;;   (define (iter e c count)
-;;     (if (and (<= c e) (< count max-primes))
-;;         (begin
-;;           (if (= (remainder (- c 1) 2) 0) ;; num is odd
-;;               (begin
-;;                 (timed-prime-test c)
-;;                 (iter e (+ c 1) (+ count 1))))
-;;           (iter e (+ c 1) count))))
-;;   (iter e s 0))
 
 (define (search-for-primes s e max-primes)
   (define (iter e c n)
@@ -59,14 +53,10 @@
   (display n)
   (newline))
 
-
-
-;; check the primality of consecutive odd integers over the range s..e
-;; 1. Print the consecutive odd integers from s..e
-
 ;; n          | time
-;; 1,000      | 3,000
+;; 1,000      | 2,500
 ;; 10,000     | 6,000
-;; 100,000    | 21,000
-;; 1,000,000  | 72,000
+;; 100,000    | 15,000
+;; 1,000,000  | 33,000
 
+;; At higher numbers, this algorithm runs about twice as fast. It isn't as noticeable at lower numbers
